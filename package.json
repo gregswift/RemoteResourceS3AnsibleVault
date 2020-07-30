@@ -1,7 +1,7 @@
 {
-  "name": "@razee/remoteresources3decrypt",
+  "name": "@razee/remoteresources3ansiblevault",
   "version": "0.0.0-dev",
-  "description": "Razeedeploy: component to download and manage files from s3 object storage, and decrypt/extract them if necessary",
+  "description": "Razeedeploy: component to download and manage files from s3 object storage, and decrypt them using Ansible Vault",
   "main": "main.js",
   "keywords": [
     "kubernetes",
@@ -13,8 +13,8 @@
     "object",
     "storage",
     "decrypt",
-    "extract",
-    "tar"
+    "ansible",
+    "ansible-vault"
   ],
   "scripts": {
     "start": "node src/index.js",
@@ -23,20 +23,17 @@
     "check-coverage": "nyc check-coverage --statements 0 --branches 0 --functions 0 --lines 0",
     "lint": "node_modules/.bin/npm-run-all eslint yamllint markdownlint",
     "eslint": "node_modules/.bin/eslint src/",
-    "yamllint": "node_modules/.bin/yamllint .travis.yml kubernetes/RemoteResourceS3Decrypt/resource.yaml",
+    "yamllint": "node_modules/.bin/yamllint .travis.yml kubernetes/RemoteResourceS3AnsibleVault/resource.yaml",
     "markdownlint": "node_modules/.bin/markdownlint README.md docs/",
     "dockerlint": "node_modules/.bin/dockerlint Dockerfile"
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:razee-io/RemoteResourceS3Decrypt.git"
+    "url": "git@github.com:logdna/RemoteResourceS3AnsibleVault.git"
   },
   "contributors": [
     {
-      "name": "Alex Lewitt"
-    },
-    {
-      "name": "Adam King"
+      "name": "Greg Swift"
     }
   ],
   "publishConfig": {
@@ -48,10 +45,8 @@
     "@razee/razeedeploy-core": "^0.9.0",
     "@razee/remoteresources3": "^0.6.2",
     "bunyan": "^1.8.14",
-    "gunzip-maybe": "^1.4.2",
     "object-path": "^0.11.4",
-    "openpgp": "^4.10.6",
-    "tar-stream": "^2.1.3"
+    "ansible-vault": "^1.0.0"
   },
   "devDependencies": {
     "chai": "^4.2.0",
