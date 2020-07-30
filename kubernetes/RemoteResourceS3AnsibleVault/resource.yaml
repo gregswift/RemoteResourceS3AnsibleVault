@@ -215,14 +215,14 @@ items:
                     password:
                       type: object
                       oneOf:
-                        - required: [privateKeys]
-                        - required: [privateKeyRefs]
+                        - required: [passwords]
+                        - required: [passwordRefs]
                       properties:
-                        privateKeys:
+                        passwords:
                           type: array
                           items:
                             type: string
-                        privateKeyRefs:
+                        passwordRefs:
                           type: array
                           items:
                             type: object
