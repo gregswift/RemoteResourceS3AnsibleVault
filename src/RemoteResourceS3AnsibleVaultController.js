@@ -14,46 +14,16 @@
  * limitations under the License.
  */
 
-const openpgp = require('openpgp');
+const { Vault } = require('ansible-vault');
 const loggerFactory = require('./bunyan-api');
-const gunzip = require('gunzip-maybe');
 const objectPath = require('object-path');
 const Readable = require('stream').Readable;
-const tar = require('tar-stream');
 const { RemoteResourceS3Controller } = require('@razee/remoteresources3');
 
 module.exports = class RemoteResourceS3AnsibleVaultController extends RemoteResourceS3Controller {
   constructor(params) {
     params.logger = params.logger || loggerFactory.createLogger('RemoteResourceS3AnsibleVaultController');
     super(params);
-  }
-
-  async uncompress(data) {
-    this.log.debug('uncompress');
-    return new Promise((resolve, reject) => {
-      let extract = tar.extract();
-      let delimiter = '';
-      let unpackedData = '';
-      let rs = new Readable;
-      rs.push(data);
-      rs.push(null);
-      rs.pipe(gunzip()).pipe(extract);
-      extract.on('entry', (header, stream, next) => {
-        let buffers = [];
-        stream.on('data', (data) => buffers.push(data));
-        stream.on('error', reject);
-        stream.on('end', () => {
-          let entryBuffer = Buffer.concat(buffers);
-          unpackedData += delimiter;
-          unpackedData += entryBuffer.toString('ascii');
-          delimiter = '---\n';
-          next();
-        });
-        extract.on('finish', () => {
-          resolve(unpackedData);
-        });
-      });
-    });
   }
 
   async download(reqOpt) {
@@ -75,36 +45,32 @@ module.exports = class RemoteResourceS3AnsibleVaultController extends RemoteReso
       // if response is not binary, reset body to utf-8 string
       res.body = res.body.toString('utf8');
     }
+    # TODO: umm.. keys ? 
     let alpha1Keys = objectPath.get(this.data, ['object', 'spec', 'keys'], []);
-    let objKeys = objectPath.get(this.data, ['object', 'spec', 'gpg', 'privateKeyRefs'], []);
-    let strKeys = objectPath.get(this.data, ['object', 'spec', 'gpg', 'privateKeys'], []);
-    let keys = alpha1Keys.concat(objKeys, strKeys);
-    this.log.debug('Fetching keys:', JSON.stringify(keys));
-    let options = { privateKeys: [] };
+    let objPasswords = objectPath.get(this.data, ['object', 'spec', 'password', 'passwordRefs'], []);
+    let strPasswords = objectPath.get(this.data, ['object', 'spec', 'password', '[passwords'], []);
+    let passwords = alpha1Keys.concat(objPasswords, strPasswords);
+    this.log.debug('Fetching password:', JSON.stringify(password));
+    let options = { passwords: [] };
 
-    if (keys.length > 0) {
-      for (var i = 0, len = keys.length; i < len; i++) {
-        let gpgKey;
-        if (typeof keys[i] == 'object') {
-          let secretName = objectPath.get(keys[i], ['valueFrom', 'secretKeyRef', 'name']);
-          let secretNamespace = objectPath.get(keys[i], ['valueFrom', 'secretKeyRef', 'namespace']);
-          let key = objectPath.get(keys[i], ['valueFrom', 'secretKeyRef', 'key']);
-          gpgKey = await this._getSecretData(secretName, key, secretNamespace);
+    if (passwords.length > 0) {
+      for (var i = 0, len = passwords.length; i < len; i++) {
+        let password;
+        if (typeof passwords[i] == 'object') {
+          let secretName = objectPath.get(passwords[i], ['valueFrom', 'secretKeyRef', 'name']);
+          let secretNamespace = objectPath.get(passwords[i], ['valueFrom', 'secretKeyRef', 'namespace']);
+          let key = objectPath.get(passwords[i], ['valueFrom', 'secretKeyRef', 'key']);
+          password = await this._getSecretData(secretName, key, secretNamespace);
         } else {
-          gpgKey = keys[i];
+          password = passwords[i];
         }
 
-        if (gpgKey) {
-          const privKeyObj = await openpgp.key.readArmored(gpgKey.replace(/^[^\S\r\n]+/gm, ''));
-          if (privKeyObj.err) {
-            this.log.error(privKeyObj.err);
-            return Promise.reject({ statusCode: 500, message: 'import key failed.. see logs for details.', url: source });
-          }
-          options.privateKeys = options.privateKeys.concat(privKeyObj.keys);
+        if (password) {
+          options.passwords = options.passwords.concat(password);
         }
       }
     }
-    this.log.debug('All Keys found:', options.privateKeys.map(k => k.getUserIds()));
+    this.log.debug('Passwords found:', options.passwords.length);
 
     try {
       this.log.info(`Downloaded from ${source} type: ${Buffer.isBuffer(res.body) ? 'Buffer' : typeof res.body} length: ${res.body.length}`);
