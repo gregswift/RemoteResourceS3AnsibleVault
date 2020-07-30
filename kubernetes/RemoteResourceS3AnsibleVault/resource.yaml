@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: List
 metadata:
-  name: remoteresources3decrypt-controller-list
+  name: remoteresources3ansiblevault-controller-list
   annotations:
     version: "{{TRAVIS_COMMIT}}"
 type: array
@@ -9,7 +9,7 @@ items:
   - apiVersion: apps/v1
     kind: Deployment
     metadata:
-      name: remoteresources3decrypt-controller
+      name: remoteresources3ansiblevault-controller
       annotations:
         razee.io/git-repo: "{{{GIT_REMOTE}}}"
         razee.io/commit-sha: "{{TRAVIS_COMMIT}}"
@@ -19,19 +19,19 @@ items:
       replicas: 1
       selector:
         matchLabels:
-          app: remoteresources3decrypt-controller
+          app: remoteresources3ansiblevault-controller
       strategy:
         type: RollingUpdate
       template:
         metadata:
           labels:
-            app: remoteresources3decrypt-controller
+            app: remoteresources3ansiblevault-controller
             razee/watch-resource: "lite"
-          name: remoteresources3decrypt-controller
+          name: remoteresources3ansiblevault-controller
         spec:
           serviceAccountName: razeedeploy-sa
           containers:
-          - image: "quay.io/razee/remoteresources3decrypt:{{TRAVIS_TAG}}"
+          - image: "quay.io/razee/remoteresources3ansiblevault:{{TRAVIS_TAG}}"
             resources:
               limits:
                 memory: 200Mi
@@ -47,7 +47,7 @@ items:
                     key: CRD_WATCH_TIMEOUT_SECONDS
                     optional: true
             imagePullPolicy: Always
-            name: remoteresources3decrypt-controller
+            name: remoteresources3ansiblevault-controller
             livenessProbe:
               exec:
                 command:
@@ -74,7 +74,7 @@ items:
     kind: CustomResourceDefinition
     metadata:
       # name must match the spec fields below, and be in the form: <plural>.<group>
-      name: remoteresourcess3decrypt.deploy.razee.io
+      name: remoteresourcess3ansiblevault.deploy.razee.io
       annotations:
         razee.io/git-repo: "{{{GIT_REMOTE}}}"
         razee.io/commit-sha: "{{TRAVIS_COMMIT}}"
@@ -212,7 +212,7 @@ items:
                                           type: string
                                         key:
                                           type: string
-                    gpg:
+                    password:
                       type: object
                       oneOf:
                         - required: [privateKeys]
@@ -272,11 +272,11 @@ items:
       scope: Namespaced
       names:
         # plural name to be used in the URL: /apis/<group>/<version>/<plural>
-        plural: remoteresourcess3decrypt
+        plural: remoteresourcess3ansiblevault
         # singular name to be used as an alias on the CLI and for display
-        singular: remoteresources3decrypt
+        singular: remoteresources3ansiblevault
         # kind is normally the CamelCased singular type. Your resource manifests use this.
-        kind: RemoteResourceS3Decrypt
+        kind: RemoteResourceS3AnsibleVault
         # shortNames allow shorter string to match your resource on the CLI
         shortNames:
         - rrs3d

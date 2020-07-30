@@ -22,9 +22,9 @@ const Readable = require('stream').Readable;
 const tar = require('tar-stream');
 const { RemoteResourceS3Controller } = require('@razee/remoteresources3');
 
-module.exports = class RemoteResourceS3DecryptController extends RemoteResourceS3Controller {
+module.exports = class RemoteResourceS3AnsibleVaultController extends RemoteResourceS3Controller {
   constructor(params) {
-    params.logger = params.logger || loggerFactory.createLogger('RemoteResourceS3DecryptController');
+    params.logger = params.logger || loggerFactory.createLogger('RemoteResourceS3AnsibleVaultController');
     super(params);
   }
 

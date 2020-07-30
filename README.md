@@ -1,17 +1,16 @@
-# RemoteResourceS3Decrypt
+# RemoteResourceS3AnsibleVault
 
-[![Build Status](https://travis-ci.com/razee-io/RemoteResourceS3Decrypt.svg?branch=master)](https://travis-ci.com/razee-io/RemoteResourceS3Decrypt)
-[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=razee-io/RemoteResourceS3Decrypt)](https://dependabot.com)
-![GitHub](https://img.shields.io/github/license/razee-io/RemoteResourceS3Decrypt.svg?color=success)
+[![Build Status](https://travis-ci.com/razee-io/RemoteResourceS3AnsibleVault.svg?branch=master)](https://travis-ci.com/razee-io/RemoteResourceS3AnsibleVault)
+[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=razee-io/RemoteResourceS3AnsibleVault)](https://dependabot.com)
+![GitHub](https://img.shields.io/github/license/razee-io/RemoteResourceS3AnsibleVault.svg?color=success)
 
-RemoteResourceS3Decrypt is a variant of RemoteResourceS3. RemoteResourceS3Decrypt
-extends the S3 functionality by supporting decryption and tar extraction of downloaded
-resources.
+RemoteResourceS3AnsibleVault is a variant of RemoteResourceS3. RemoteResourceS3AnsibleVault
+extends the S3 functionality by supporting decryption of downloaded resources using Ansible vault
 
 ## Install
 
 ```shell
-kubectl apply -f "https://github.com/razee-io/RemoteResourceS3Decrypt/releases/latest/download/resource.yaml"
+kubectl apply -f "https://github.com/razee-io/RemoteResourceS3AnsibleVault/releases/latest/download/resource.yaml"
 ```
 
 ## Resource Definition
@@ -20,24 +19,20 @@ kubectl apply -f "https://github.com/razee-io/RemoteResourceS3Decrypt/releases/l
 
 ```yaml
 apiVersion: "deploy.razee.io/v1alpha2"
-kind: RemoteResourceS3Decrypt
+kind: RemoteResourceS3AnsibleVault
 metadata:
   name: <remote_resource_s3_name>
   namespace: <namespace>
 spec:
-  gpg:
-    privateKeys:
-      - |
-        -----BEGIN PGP PRIVATE KEY BLOCK-----
-
-        your asci armored gpg key would go here
-        -----END PGP PRIVATE KEY BLOCK-----
-    privateKeyRefs:
-      - valueFrom:
-          secretKeyRef:
-            name: <name of secret resource>
-            namespace: <namespace of secret resource - optional>
-            key: <key of gpg_key within secret>
+  passwords:
+    passwords:
+    - "<password>"
+    passwordRefs:
+    - valueFrom:
+        secretKeyRef:
+          name: <name of secret resource>
+          namespace: <namespace of secret resource - optional>
+          key: <key of ansible-vault password>
   auth:
     # hmac:
     #   access_key_id: <key id>
@@ -79,7 +74,7 @@ spec:
   type: object
   required: [requests]
   properties:
-    gpg:
+    passwords:
       type: object
       ...
     auth:
@@ -90,11 +85,11 @@ spec:
       ...
 ```
 
-### GPG
+### Passwords
 
-**Path:** `.spec.gpg`
+**Path:** `.spec.passwords`
 
-**Description:** An array of gpg keys to be imported, for decrypting files.
+**Description:** Array of possible passwords for decrypting the ansible vault
 
 **Schema:**
 
@@ -102,14 +97,14 @@ spec:
 gpg:
   type: object
   oneOf:
-    - required: [privateKeys]
-    - required: [privateKeyRefs]
+    - required: [passwords]
+    - required: [passwordRefs]
   properties:
-    privateKeys:
+    passwords:
       type: array
       items:
         type: string
-    privateKeyRefs:
+    passwprdRefs:
       type: array
       items:
         type: object
@@ -361,7 +356,7 @@ first time creating the `razeedeploy-config` ConfigMap, you must delete the runn
 controller pods so the deployment can mount the ConfigMap as a volume. If the
 `razeedeploy-config` ConfigMap already exists, just add the pair `lock-cluster: true`.
 
-1. `export CONTROLLER_NAME=remoteresources3decrypt-controller && export CONTROLLER_NAMESPACE=razee`
+1. `export CONTROLLER_NAME=remoteresources3ansiblevault-controller && export CONTROLLER_NAMESPACE=razee`
 1. `kubectl create cm razeedeploy-config -n $CONTROLLER_NAMESPACE --from-literal=lock-cluster=true`
 1. `kubectl delete pods -n $CONTROLLER_NAMESPACE $(kubectl get pods -n $CONTROLLER_NAMESPACE
  | grep $CONTROLLER_NAME | awk '{print $1}' | paste -s -d ',' -)`
