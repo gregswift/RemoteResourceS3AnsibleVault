@@ -38,59 +38,53 @@ module.exports = class RemoteResourceS3AnsibleVaultController extends RemoteReso
 
     let source = reqOpt.uri || reqOpt.url;
 
-    let isBinary = false;
-    if (res.headers['content-type'] === 'binary/octet-stream') {
-      isBinary = true;
-    } else {
-      // if response is not binary, reset body to utf-8 string
-      res.body = res.body.toString('utf8');
-    }
-    # TODO: umm.. keys ? 
+    res.body = res.body.toString('utf8');
+
+    # TODO: umm.. keys ?
     let alpha1Keys = objectPath.get(this.data, ['object', 'spec', 'keys'], []);
     let objPasswords = objectPath.get(this.data, ['object', 'spec', 'password', 'passwordRefs'], []);
-    let strPasswords = objectPath.get(this.data, ['object', 'spec', 'password', '[passwords'], []);
-    let passwords = alpha1Keys.concat(objPasswords, strPasswords);
-    this.log.debug('Fetching password:', JSON.stringify(password));
-    let options = { passwords: [] };
+    let strPasswords = objectPath.get(this.data, ['object', 'spec', 'password', 'passwords'], []);
+    let arrPasswords = alpha1Keys.concat(objPasswords, strPasswords);
+    this.log.debug('Fetching passwords:', JSON.stringify(arrPasswords));
+    let passwords = []
 
-    if (passwords.length > 0) {
-      for (var i = 0, len = passwords.length; i < len; i++) {
+    if (arrPasswords.length > 0) {
+      for (var i = 0, len = arrPasswords.length; i < len; i++) {
         let password;
-        if (typeof passwords[i] == 'object') {
-          let secretName = objectPath.get(passwords[i], ['valueFrom', 'secretKeyRef', 'name']);
-          let secretNamespace = objectPath.get(passwords[i], ['valueFrom', 'secretKeyRef', 'namespace']);
-          let key = objectPath.get(passwords[i], ['valueFrom', 'secretKeyRef', 'key']);
+        if (typeof arrPasswords[i] == 'object') {
+          let secretName = objectPath.get(arrPasswords[i], ['valueFrom', 'secretKeyRef', 'name']);
+          let secretNamespace = objectPath.get(arrPasswords[i], ['valueFrom', 'secretKeyRef', 'namespace']);
+          let key = objectPath.get(arrPasswords[i], ['valueFrom', 'secretKeyRef', 'key']);
           password = await this._getSecretData(secretName, key, secretNamespace);
         } else {
-          password = passwords[i];
+          password = arrPassword[i];
         }
 
         if (password) {
-          options.passwords = options.passwords.concat(password);
+          passwords = passwords.concat(password);
         }
       }
     }
-    this.log.debug('Passwords found:', options.passwords.length);
+    this.log.debug('Passwords found: ', passwords.length);
 
     try {
       this.log.info(`Downloaded from ${source} type: ${Buffer.isBuffer(res.body) ? 'Buffer' : typeof res.body} length: ${res.body.length}`);
-      const isCompressed = source.includes('.tar') || source.includes('.tgz');
-      if (source.includes('.gpg')) {
-        this.log.debug(`Decrypting ${reqOpt.uri || reqOpt.url} isBinary: ${isBinary} isCompressed: ${isCompressed}`);
-        if (isBinary) {
-          objectPath.set(options, 'message', await openpgp.message.read(res.body));
-          objectPath.set(options, 'format', 'binary');
-        } else {
-          objectPath.set(options, 'message', await openpgp.message.readArmored(res.body));
+      if (source.includes('.vault')) {
+        let errors = []
+        for (let password of passwords) {
+          this.log.debug(`Decrypting ${reqOpt.uri || reqOpt.url}`);
+          const vault = new Vault({ password: password });
+          try {
+            res.body = await vault.decrypt(res.body);
+            this.log.debug(`Decrypting Succeeded ${reqOpt.uri || reqOpt.url}`);
+            return res;
+          } catch (error) {
+            errors.push(error)
+          }
         }
-        let plaintext = await openpgp.decrypt(options);
-        res.body = plaintext.data;
-        this.log.debug(`Decrypting Succeeded ${reqOpt.uri || reqOpt.url}`);
+        errors.foreach(error => { this.log.error(error) })
+        throw (`No password able to successfully decrypt ${source}`);
       }
-      if (isCompressed) {
-        res.body = await this.uncompress(res.body);
-      }
-      return res;
     } catch (error) {
       this.log.error(error, 'decryption failed');
       return Promise.reject({ statusCode: 500, message: 'decryption failed.. see logs for details.', url: source });
