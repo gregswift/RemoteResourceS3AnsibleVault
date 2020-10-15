@@ -40,13 +40,13 @@ module.exports = class RemoteResourceS3AnsibleVaultController extends RemoteReso
 
     res.body = res.body.toString('utf8');
 
-    # TODO: umm.. keys ?
+    // TODO: umm.. keys ?
     let alpha1Keys = objectPath.get(this.data, ['object', 'spec', 'keys'], []);
     let objPasswords = objectPath.get(this.data, ['object', 'spec', 'password', 'passwordRefs'], []);
     let strPasswords = objectPath.get(this.data, ['object', 'spec', 'password', 'passwords'], []);
     let arrPasswords = alpha1Keys.concat(objPasswords, strPasswords);
     this.log.debug('Fetching passwords:', JSON.stringify(arrPasswords));
-    let passwords = []
+    let passwords = [];
 
     if (arrPasswords.length > 0) {
       for (var i = 0, len = arrPasswords.length; i < len; i++) {
@@ -57,7 +57,7 @@ module.exports = class RemoteResourceS3AnsibleVaultController extends RemoteReso
           let key = objectPath.get(arrPasswords[i], ['valueFrom', 'secretKeyRef', 'key']);
           password = await this._getSecretData(secretName, key, secretNamespace);
         } else {
-          password = arrPassword[i];
+          password = arrPasswords[i];
         }
 
         if (password) {
@@ -70,7 +70,7 @@ module.exports = class RemoteResourceS3AnsibleVaultController extends RemoteReso
     try {
       this.log.info(`Downloaded from ${source} type: ${Buffer.isBuffer(res.body) ? 'Buffer' : typeof res.body} length: ${res.body.length}`);
       if (source.includes('.vault')) {
-        let errors = []
+        let errors = [];
         for (let password of passwords) {
           this.log.debug(`Decrypting ${reqOpt.uri || reqOpt.url}`);
           const vault = new Vault({ password: password });
@@ -79,10 +79,10 @@ module.exports = class RemoteResourceS3AnsibleVaultController extends RemoteReso
             this.log.debug(`Decrypting Succeeded ${reqOpt.uri || reqOpt.url}`);
             return res;
           } catch (error) {
-            errors.push(error)
+            errors.push(error);
           }
         }
-        errors.foreach(error => { this.log.error(error) })
+        errors.foreach( error => { this.log.error(error); });
         throw (`No password able to successfully decrypt ${source}`);
       }
     } catch (error) {
