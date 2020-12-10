@@ -3,7 +3,7 @@ kind: List
 metadata:
   name: remoteresources3ansiblevault-controller-list
   annotations:
-    version: "{{TRAVIS_COMMIT}}"
+    version: "${GIT_REF}"
 type: array
 items:
   - apiVersion: apps/v1
@@ -11,8 +11,8 @@ items:
     metadata:
       name: remoteresources3ansiblevault-controller
       annotations:
-        razee.io/git-repo: "{{{GIT_REMOTE}}}"
-        razee.io/commit-sha: "{{TRAVIS_COMMIT}}"
+        razee.io/git-repo: "${GIT_URL}"
+        razee.io/commit-sha: "${GIT_REF}"
       labels:
         razee/watch-resource: "lite"
     spec:
@@ -31,7 +31,7 @@ items:
         spec:
           serviceAccountName: razeedeploy-sa
           containers:
-          - image: "quay.io/razee/remoteresources3ansiblevault:{{TRAVIS_TAG}}"
+          - image: "quay.io/razee/remoteresources3ansiblevault:${VERSION}"
             resources:
               limits:
                 memory: 200Mi
@@ -76,8 +76,8 @@ items:
       # name must match the spec fields below, and be in the form: <plural>.<group>
       name: remoteresourcess3ansiblevault.deploy.razee.io
       annotations:
-        razee.io/git-repo: "{{{GIT_REMOTE}}}"
-        razee.io/commit-sha: "{{TRAVIS_COMMIT}}"
+        razee.io/git-repo: "${GIT_URL}"
+        razee.io/commit-sha: "${GIT_REF}"
     spec:
       # group name to use for REST API: /apis/<group>/<version>
       group: deploy.razee.io
