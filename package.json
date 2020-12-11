@@ -40,6 +40,9 @@
     "git": {
       "tag": false
     },
+    "npm": {
+      "skipChecks": true
+    },
     "publishConfig": {
       "access": "public"
     }
