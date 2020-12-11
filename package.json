@@ -38,7 +38,6 @@
   ],
   "release-it": {
     "git": {
-      "requireBranch": "master",
       "tag": false
     },
     "publishConfig": {
