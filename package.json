@@ -37,7 +37,8 @@
     }
   ],
   "git": {
-    "requireBranch": "master"
+    "requireBranch": "master",
+    "tag": false
   },
   "publishConfig": {
     "access": "public"
