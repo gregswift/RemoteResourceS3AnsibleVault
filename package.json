@@ -36,12 +36,14 @@
       "name": "Greg Swift"
     }
   ],
-  "git": {
-    "requireBranch": "master",
-    "tag": false
-  },
-  "publishConfig": {
-    "access": "public"
+  "release-it": {
+    "git": {
+      "requireBranch": "master",
+      "tag": false
+    },
+    "publishConfig": {
+      "access": "public"
+    }
   },
   "license": "Apache-2.0",
   "dependencies": {
