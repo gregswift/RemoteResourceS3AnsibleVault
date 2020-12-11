@@ -1,19 +1,27 @@
 ## Define sources for rendering and templating
 BUILD_TIMESTAMP := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 BUILD_URL ?= localbuild://${USER}@$(shell uname -n | sed "s/'//g")
+CI_TAG = $(TRAVIS_TAG)
 DOCKER_IMAGE ?= 'quay.io/razee/remoteresources3ansiblevault'
 DOCKER_PULL_OPTS ?= ''
 GIT_BRANCH ?= $(shell git branch --show-current)
 GIT_URL ?= $(shell git remote get-url origin)
 GIT_REF ?= $(or $(TRAVIS_COMMIT), $(shell git rev-parse HEAD))
+GIT_SHORTREF ?= $(shell git rev-parse --short HEAD)
+GIT_TAG ?= $(shell git describe --tags 2>/dev/null)
+IS_RELEASE ?= $(if $(CI_TAG), true)
 PACKAGE_VERSION := $(shell awk '/version/ {gsub(/[",]/,""); print $$2}' package.json)
 SOURCE_DIR ?= kubernetes
 TMP_DIR ?= tmp
 URL ?= 'https://razee.io'
-VERSION ?= $(or $(TRAVIS_TAG), $(PACKAGE_VERSION))
+VERSION ?= $(or $(GIT_TAG), $(PACKAGE_VERSION))
 
-# Define commands via docker
+# Check if this is via CI
+CI_MODE := $(if $(TRAVIS_COMMIT), "--ci")
+
+# Define commands
 DOCKER = docker
+RELEASEIT = node_modules/.bin/release-it
 
 # Get list of files to render
 SOURCE_FILES := $(wildcard $(SOURCE_DIR)/*.yaml)
@@ -42,6 +50,10 @@ debug-%:              ## Debug a variable by calling `make debug-VARIABLE`
 help:                 ## Show this help, includes list of all actions.
 	@awk 'BEGIN {FS = ":.*?## "}; /^.+: .*?## / && !/awk/ {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' ${MAKEFILE_LIST}
 
+.PHONY:setup
+setup:       ## Install any dev dependencies
+	npm ci
+
 .PHONY:.check-env
 .check-env: .check-env-publish
 
@@ -53,7 +65,13 @@ help:                 ## Show this help, includes list of all actions.
 			exit 1; \
 		fi; \
 	fi
+	@test $${GITHUB_TOKEN:ERROR Undefined GITHUB_TOKEN required to publish releases}
 	@echo Publishing environment check complete
+
+.PHONY:.check-env-release
+.check-env-release: .check-env-publish
+	@test $${IS_RELEASE?ERROR: Undefined IS_RELEASE - Not Identified as an official release to cut}
+	@echo Release environment check complete
 
 .PHONY:clean
 clean:          ## Cleanup the local checkout
@@ -93,7 +111,7 @@ lint-docker: ## Lint the Dockerfile for issues
 	$(HADOLINT_COMMAND) Dockerfile
 
 .PHONY:lint-npm
-lint-npm:
+lint-npm: setup
 	npm run lint
 
 .PHONY:lint
@@ -127,19 +145,19 @@ build-image: ## Build a docker image as specified in the Dockerfile
 		--build-arg VCS_URL=$(GIT_URL)
 
 .PHONY:publish-build-image
-publish-build-image: ## Publish SemVer compliant releases to our internal docker registry
-	$(DOCKER) push $(DOCKER_IMAGE):$(TRAVIS_COMMIT)
+publish-build-image: .check-env-publish ## Publish SemVer compliant releases to our internal docker registry
+	$(DOCKER) push $(DOCKER_IMAGE):$(GIT_SHORTREF)
 
 .PHONY:publish-image
-publish-image: ## Publish SemVer compliant releases to our internal docker registry
+publish-image: .check-env-release ## Publish SemVer compliant releases to our internal docker registry
 	@for version in $(TARGET_VERSIONS); do \
-		$(DOCKER) tag $(DOCKER_IMAGE):$(VCS_REF) $(DOCKER_IMAGE):$${version}; \
+		$(DOCKER) tag $(DOCKER_IMAGE):$(GIT_SHORTREF) $(DOCKER_IMAGE):$${version}; \
 		$(DOCKER) push $(DOCKER_IMAGE):$${version}; \
 	done
 
 .PHONY:publish-release
-publish-release: ## Publish SemVer compliant release to GitHub Releases
-
+publish-release: .check-env-release ## Publish SemVer compliant release to GitHub Releases
+	$(RELEASEIT) $(CI_MODE)
 
 .PHONY:publish
-publish: publish-image   ## Runs all publish rules
+publish: publish-build-image publish-image publish-release  ## Runs all publish rules

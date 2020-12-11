@@ -36,6 +36,9 @@
       "name": "Greg Swift"
     }
   ],
+  "git": {
+    "requireBranch": "master"
+  },
   "publishConfig": {
     "access": "public"
   },

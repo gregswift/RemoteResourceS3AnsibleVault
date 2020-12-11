@@ -1,0 +1,10 @@
+name: pull-request
+on: [pull_request]
+jobs:
+  run-test-suite:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - run: make lint
+      - run: make test
