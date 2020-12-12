@@ -17,7 +17,6 @@
 const { Vault } = require('ansible-vault');
 const loggerFactory = require('./bunyan-api');
 const objectPath = require('object-path');
-const Readable = require('stream').Readable;
 const { RemoteResourceS3Controller } = require('@razee/remoteresources3');
 
 module.exports = class RemoteResourceS3AnsibleVaultController extends RemoteResourceS3Controller {
