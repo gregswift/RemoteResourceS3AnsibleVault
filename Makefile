@@ -9,6 +9,10 @@ GIT_URL ?= $(shell git remote get-url origin)
 GIT_REF ?= $(or $(TRAVIS_COMMIT), $(shell git rev-parse HEAD))
 GIT_SHORTREF ?= $(shell git rev-parse --short HEAD)
 GIT_TAG ?= $(shell git describe --tags 2>/dev/null)
+HADOLINT_IMAGE_REPO ?= hadolint/hadolint
+HADOLINT_IMAGE_TAG ?= v1.18.0-debian
+HADOLINT_IMAGE ?= $(HADOLINT_IMAGE_REPO):$(HADOLINT_IMAGE_TAG)
+HADOLINT_IMAGE := $(HADOLINT_IMAGE)
 IS_RELEASE ?= $(if $(CI_TAG), true)
 PACKAGE_VERSION := $(shell awk '/version/ {gsub(/[",]/,""); print $$2}' package.json)
 SOURCE_DIR ?= kubernetes
@@ -21,7 +25,11 @@ CI_MODE := $(if $(TRAVIS_COMMIT), "--ci")
 
 # Define commands
 DOCKER = docker
-RELEASEIT = node_modules/.bin/release-it
+DOCKER_RUN := $(DOCKER) run --rm -i
+RELEASEIT = npx release-it
+HADOLINT := $(DOCKER_RUN) -v ${PWD}/.hadolint.yml:/.hadolint.yaml $(HADOLINT_IMAGE)
+KUBEVAL := $(DOCKER_RUN) -v $(PWD):/data:Z garethr/kubeval --ignore-missing-schemas
+YAMLLINT := $(DOCKER_RUN) -v $(PWD):/data:Z cytopia/yamllint:latest
 
 # Get list of files to render
 SOURCE_FILES := $(wildcard $(SOURCE_DIR)/*.yaml)
@@ -92,23 +100,23 @@ render: $(RENDERED_FILES)
 
 .PHONY:lint-k8s
 lint-k8s: $(OUTPUTS)   ## Run kubeval linting against most of the k8s resources
-	$(KUBEVAL_COMMAND) -d /data/$(OUTPUT_DIR) --ignored-filename-patterns='mtp-*'
+	$(KUBEVAL) -d /data/$(OUTPUT_DIR) --ignored-filename-patterns='mtp-*'
 
 .PHONY:lint-k8s-local
 lint-k8s-local: $(LOCAL_OUTPUTS)   ## Run kubeval linting against the mustache generated resources
-	$(KUBEVAL_COMMAND) -d /data/$(RENDERED_DIR) --ignore-missing-schemas
+	$(KUBEVAL) -d /data/$(RENDERED_DIR) --ignore-missing-schemas
 
 .PHONY:lint-yaml
 lint-yaml: $(OUTPUTS)     ## Run yaml linting against most of the k8s resources
-	$(YAMLLINT_COMMAND) /data/$(OUTPUT_DIR)
+	$(YAMLLINT) /data/$(OUTPUT_DIR)
 
 .PHONY:lint-yaml-local
 lint-yaml-local: $(LOCAL_OUTPUTS)     ## Run yaml linting against the mustache generated resources
-	$(YAMLLINT_COMMAND) /data/$(RENDERED_DIR)
+	$(YAMLLINT) /data/$(RENDERED_DIR)
 
 .PHONY:lint-docker
 lint-docker: ## Lint the Dockerfile for issues
-	$(HADOLINT_COMMAND) Dockerfile
+	$(HADOLINT) < Dockerfile
 
 .PHONY:lint-npm
 lint-npm: setup
