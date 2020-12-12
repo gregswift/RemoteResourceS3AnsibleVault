@@ -4,8 +4,9 @@
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=razee-io/RemoteResourceS3AnsibleVault)](https://dependabot.com)
 ![GitHub](https://img.shields.io/github/license/razee-io/RemoteResourceS3AnsibleVault.svg?color=success)
 
-RemoteResourceS3AnsibleVault is a variant of RemoteResourceS3. RemoteResourceS3AnsibleVault
-extends the S3 functionality by supporting decryption of downloaded resources using Ansible vault
+RemoteResourceS3AnsibleVault is a variant of RemoteResourceS3.
+RemoteResourceS3AnsibleVault extends the S3 functionality by supporting
+decryption of downloaded resources using Ansible vault.
 
 ## Install
 
@@ -363,6 +364,6 @@ controller pods so the deployment can mount the ConfigMap as a volume. If the
 
 ## Build
 
-```
+```lang-sh
 make build
 ```
