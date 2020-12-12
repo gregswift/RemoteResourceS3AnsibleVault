@@ -360,3 +360,9 @@ controller pods so the deployment can mount the ConfigMap as a volume. If the
 1. `kubectl create cm razeedeploy-config -n $CONTROLLER_NAMESPACE --from-literal=lock-cluster=true`
 1. `kubectl delete pods -n $CONTROLLER_NAMESPACE $(kubectl get pods -n $CONTROLLER_NAMESPACE
  | grep $CONTROLLER_NAME | awk '{print $1}' | paste -s -d ',' -)`
+
+## Build
+
+```
+make build
+```
