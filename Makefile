@@ -27,7 +27,7 @@ CI_MODE := $(if $(TRAVIS_COMMIT), "--ci")
 DOCKER = docker
 DOCKER_RUN := $(DOCKER) run --rm -i
 RELEASEIT = npx release-it
-HADOLINT := $(DOCKER_RUN) -v ${PWD}/.hadolint.yaml:/.hadolint.yaml $(HADOLINT_IMAGE)
+HADOLINT := $(DOCKER_RUN) -v ${PWD}/.hadolint.yaml:/root/.config/hadolint.yaml:Z $(HADOLINT_IMAGE)
 KUBEVAL := $(DOCKER_RUN) -v $(PWD):/data:Z garethr/kubeval --ignore-missing-schemas
 YAMLLINT := $(DOCKER_RUN) -v $(PWD):/data:Z cytopia/yamllint:latest
 
