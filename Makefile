@@ -126,7 +126,7 @@ fix-audit:      ## Run NPM audit, and install compatible updates
 	npm audit fix
 
 .PHONY:test
-test:      ## Run all test rules
+test: setup     ## Run all test rules
 	npm test
 
 .PHONY:clean-docker
