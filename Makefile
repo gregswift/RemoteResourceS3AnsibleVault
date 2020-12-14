@@ -99,20 +99,12 @@ $(RENDERED_FILES): $(SOURCE_FILES) | $(TMP_DIR)
 render: $(RENDERED_FILES)
 
 .PHONY:lint-k8s
-lint-k8s: $(OUTPUTS)   ## Run kubeval linting against most of the k8s resources
-	$(KUBEVAL) -d /data/$(OUTPUT_DIR) --ignored-filename-patterns='mtp-*'
-
-.PHONY:lint-k8s-local
-lint-k8s-local: $(LOCAL_OUTPUTS)   ## Run kubeval linting against the mustache generated resources
-	$(KUBEVAL) -d /data/$(RENDERED_DIR) --ignore-missing-schemas
+lint-k8s: $(RENDERED_FILES)   ## Run kubeval linting against most of the k8s resources
+	$(KUBEVAL) -d /data/$(TMP_DIR) --ignore-missing-schemas
 
 .PHONY:lint-yaml
-lint-yaml: $(OUTPUTS)     ## Run yaml linting against most of the k8s resources
-	$(YAMLLINT) /data/$(OUTPUT_DIR)
-
-.PHONY:lint-yaml-local
-lint-yaml-local: $(LOCAL_OUTPUTS)     ## Run yaml linting against the mustache generated resources
-	$(YAMLLINT) /data/$(RENDERED_DIR)
+lint-yaml: $(RENDERED_FILES)     ## Run yaml linting against most of the k8s resources
+	$(YAMLLINT) /data/$(TMP_DIR)
 
 .PHONY:lint-docker
 lint-docker: ## Lint the Dockerfile for issues
@@ -123,7 +115,7 @@ lint-npm: setup
 	npm run lint
 
 .PHONY:lint
-lint: lint-npm lint-docker render-local lint-k8s lint-k8s-local lint-yaml lint-yaml-local   ## Run all linting rules
+lint: lint-npm lint-docker lint-k8s lint-yaml   ## Run all linting rules
 
 .PHONY:audit
 audit:      ## Run NPM audit
