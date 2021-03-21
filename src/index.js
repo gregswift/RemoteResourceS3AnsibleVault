@@ -17,7 +17,7 @@
 const { EventHandler, KubeClass, KubeApiConfig } = require('@razee/kubernetes-util');
 const kubeApiConfig = KubeApiConfig();
 
-const ControllerString = 'RemoteResourceS3Decrypt';
+const ControllerString = 'RemoteResourceS3AnsibleVault';
 const log = require('./bunyan-api').createLogger(ControllerString);
 
 async function createNewEventHandler(kc) {

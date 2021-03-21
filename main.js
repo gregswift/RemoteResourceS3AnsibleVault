@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-const RemoteResourceS3DecryptController = require('./src/RemoteResourceS3DecryptController');
+const RemoteResourceS3AnsibleVaultController = require('./src/RemoteResourceS3AnsibleVaultController');
 
 module.exports = {
-  RemoteResourceS3DecryptController
+  RemoteResourceS3AnsibleVaultController
 };
